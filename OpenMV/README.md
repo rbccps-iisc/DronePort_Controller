@@ -1,3 +1,3 @@
 #Controller
-The Controller code runs in SBC platforms
+The Controller code runs in OpenMV camera platform
 
