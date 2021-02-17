@@ -4,6 +4,8 @@ import glob
 import math
 import time
 
+import rospy
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 class DronePortController():
     def __init__(self, settings=dict()):
@@ -115,7 +117,7 @@ class DronePortController():
             self._serialLimiters[1]) + 1:self._cameraOutOfFrameValue.rfind(self._serialLimiters[2])])
 
         # Get update height
-        self._uavPos[2] = self._uavGetHeight()
+        self._uavGetHeight()
         xPoints = [0]
         yPoints = [0]
 
@@ -243,5 +245,9 @@ class DronePortController():
 
         return availablePorts
 
+    def callbackHeight(self,data):
+        self._uavPos[2]=data.pose.pose.position.z
+
+
     def _uavGetHeight(self):
-        pass
+        rospy.Subscribe("/mavros/global_position/local",PoseWithCovarianceStamped,self.callbackHeight)
