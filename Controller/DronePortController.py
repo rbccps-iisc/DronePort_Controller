@@ -245,6 +245,3 @@ class DronePortController():
 
     def _uavGetHeight(self):
         pass
-
-    def _pixelConversion(self, xPos, yPos, param):
-        pass
