@@ -62,7 +62,7 @@ class image_parse:
 
         cv2.imshow("Image window", cv_image)
         cv2.imshow('frame diff ', frame_diff)
-        cv2.imshow("Keypoints", im_with_keypoints)
+        #cv2.imshow("Keypoints", im_with_keypoints)
         cv2.waitKey(1)
         self.prev_cv_image = cv_image.copy()
 
