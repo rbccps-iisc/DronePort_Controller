@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import imutils as imutils
 import roslib
 import sys
 import rospy
@@ -20,16 +21,9 @@ class image_parse:
                                           self.callback)
         self.set_s = 0
 
-        #self.params = cv2.SimpleBlobDetector_Params()
-
-        # Change thresholds
-        #self.params.minThreshold = 1
-
-        #self.params.filterByArea = True
-
-        #self.params.minArea = 1
-
-        #self.params.minDistBetweenBlobs = 5
+        #centroid of UAV
+        self.cX = 0
+        self.cY = 0
 
     def callback(self, data):
         try:
@@ -37,32 +31,50 @@ class image_parse:
         except CvBridgeError as e:
             print(e)
 
-        #(rows, cols, channels) = cv_image.shape
-        #if cols > 60 and rows > 60:
+        # (rows, cols, channels) = cv_image.shape
+        # if cols > 60 and rows > 60:
         #    cv2.circle(cv_image, (50, 50), 10, 255)
-        #cv2.imshow("Image window", cv_image)
-        #cv2.waitKey(3)
+        # cv2.imshow("Image window", cv_image)
+        # cv2.waitKey(3)
 
         if (self.set_s == 0):
-            self.prev_cv_image = cv_image
+            self.prev_cv_image = cv_image.copy()
             self.set_s = 1
-            print("Here Once")
-        #detector = cv2.SimpleBlobDetector_create(self.params)
+            binary = cv_image.copy()
+            # print("Here Once")
 
         curr_gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         prev_gray = cv2.cvtColor(self.prev_cv_image, cv2.COLOR_BGR2GRAY)
 
         frame_diff = cv2.absdiff(curr_gray, prev_gray)
 
-        #keypoints = detector.detect(frame_diff)
 
-        #print(keypoints)
-        #im_with_keypoints = cv2.drawKeypoints(frame_diff, keypoints, np.array([]), (0, 0, 255),
-        #                                      cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        ret, thresh = cv2.threshold(frame_diff, 30, 255, cv2.THRESH_BINARY)
+
+        kernel = np.ones((3, 3), np.uint8)
+        dilated = cv2.dilate(thresh, kernel, iterations=1)
+
+        cnts = cv2.findContours(dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        ctemp_c = cv_image.copy()
+        valid_cntr = []
+        for c in cnts:
+            #(x, y, w, h) = cv2.boundingRect(c)
+            M = cv2.moments(c)
+
+            self.cX = int(M["m10"] / M["m00"])
+            self.cY = int(M["m01"] / M["m00"])
+
+        cv2.drawContours(ctemp_c, cnts, -1, (127, 200, 0), 2)
+        cv2.circle(ctemp_c,(self.cX,self.cY),7, (255,255,255),-1)
+
+        print("center",self.cX,self.cY)
+        # Detect blobs(groups of pixels)
+        # image = self.DetectBlobs(morphed, cv_image)  # Detect groups using countour area (Green formula)
 
         cv2.imshow("Image window", cv_image)
         cv2.imshow('frame diff ', frame_diff)
-        #cv2.imshow("Keypoints", im_with_keypoints)
+        cv2.imshow("contour",ctemp_c)
         cv2.waitKey(1)
         self.prev_cv_image = cv_image.copy()
 
